@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>自由に回せるアナログ時計</title>
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    display: grid;
+    place-items: center;
+    background: #f3f4f6;
+    font-family: sans-serif;
+  }
+
+  .wrap {
+    text-align: center;
+  }
+
+  .clock {
+    width: 360px;
+    height: 360px;
+    border: 10px solid #222;
+    border-radius: 50%;
+    background: white;
+    position: relative;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    touch-action: none;
+    user-select: none;
+  }
+
+  .center {
+    width: 18px;
+    height: 18px;
+    background: #222;
+    border-radius: 50%;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+  }
+
+  .hand {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform-origin: bottom center;
+    cursor: grab;
+    border-radius: 999px;
+  }
+
+  .hand:active {
+    cursor: grabbing;
+  }
+
+  .hour {
+    width: 12px;
+    height: 95px;
+    background: #222;
+    transform: translate(-50%, -100%) rotate(0deg);
+    z-index: 3;
+  }
+
+  .minute {
+    width: 8px;
+    height: 135px;
+    background: #2563eb;
+    transform: translate(-50%, -100%) rotate(0deg);
+    z-index: 4;
+  }
+
+  .number {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    font-size: 28px;
+    font-weight: bold;
+    transform: translate(-50%, -50%);
+  }
+
+  .tick {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 3px;
+    height: 14px;
+    background: #333;
+    transform-origin: center 160px;
+  }
+
+  .tick.big {
+    width: 5px;
+    height: 22px;
+    background: #111;
+  }
+
+  .time {
+    margin-top: 20px;
+    font-size: 32px;
+    font-weight: bold;
+  }
+
+  .hint {
+    margin-top: 8px;
+    color: #555;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="clock" id="clock">
+    <div class="hand hour" id="hourHand"></div>
+    <div class="hand minute" id="minuteHand"></div>
+    <div class="center"></div>
+  </div>
+
+  <div class="time" id="timeText">12:00</div>
+  <div class="hint">青い長針・黒い短針をドラッグして回せます</div>
+</div>
+
+<script>
+  const clock = document.getElementById("clock");
+  const hourHand = document.getElementById("hourHand");
+  const minuteHand = document.getElementById("minuteHand");
+  const timeText = document.getElementById("timeText");
+
+  let hour = 12;
+  let minute = 0;
+  let dragging = null;
+
+  // 長針が12をまたいだか判定するための前回角度
+  let previousMinuteAngle = null;
+
+  // 数字を配置
+  for (let i = 1; i <= 12; i++) {
+    const num = document.createElement("div");
+    num.className = "number";
+    num.textContent = i;
+
+    const angle = (i * 30 - 90) * Math.PI / 180;
+    const r = 135;
+    const x = Math.cos(angle) * r;
+    const y = Math.sin(angle) * r;
+
+    num.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+    clock.appendChild(num);
+  }
+
+  // 目盛りを配置
+  for (let i = 0; i < 60; i++) {
+    const tick = document.createElement("div");
+    tick.className = "tick" + (i % 5 === 0 ? " big" : "");
+    tick.style.transform = `translate(-50%, -160px) rotate(${i * 6}deg)`;
+    clock.appendChild(tick);
+  }
+
+  function updateClock() {
+    const minuteAngle = minute * 6;
+    const hourAngle = ((hour % 12) * 30) + (minute * 0.5);
+
+    minuteHand.style.transform =
+      `translate(-50%, -100%) rotate(${minuteAngle}deg)`;
+
+    hourHand.style.transform =
+      `translate(-50%, -100%) rotate(${hourAngle}deg)`;
+
+    const displayHour = hour === 0 ? 12 : hour;
+    timeText.textContent =
+      `${displayHour}:${String(minute).padStart(2, "0")}`;
+  }
+
+  function getAngleFromPointer(e) {
+    const rect = clock.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    const x = e.clientX - cx;
+    const y = e.clientY - cy;
+
+    let angle = Math.atan2(y, x) * 180 / Math.PI + 90;
+    if (angle < 0) angle += 360;
+
+    return angle;
+  }
+
+  function setMinuteFromAngle(angle) {
+    minute = Math.round(angle / 6) % 60;
+  }
+
+  function setHourFromAngle(angle) {
+    const rawHour = Math.round(angle / 30) % 12;
+    hour = rawHour === 0 ? 12 : rawHour;
+  }
+
+  function nextHour() {
+    hour++;
+    if (hour > 12) hour = 1;
+  }
+
+  function previousHour() {
+    hour--;
+    if (hour < 1) hour = 12;
+  }
+
+  function startDrag(type, e) {
+    dragging = type;
+
+    if (type === "minute") {
+      previousMinuteAngle = getAngleFromPointer(e);
+    }
+  }
+
+  function drag(e) {
+    if (!dragging) return;
+
+    const angle = getAngleFromPointer(e);
+
+    if (dragging === "minute") {
+      if (previousMinuteAngle !== null) {
+        const diff = angle - previousMinuteAngle;
+
+        // 反時計回りで12をまたいだ場合
+        // 例：5度 → 355度
+        if (diff > 180) {
+          previousHour();
+        }
+
+        // 時計回りで12をまたいだ場合
+        // 例：355度 → 5度
+        if (diff < -180) {
+          nextHour();
+        }
+      }
+
+      setMinuteFromAngle(angle);
+      previousMinuteAngle = angle;
+    }
+
+    if (dragging === "hour") {
+      setHourFromAngle(angle);
+    }
+
+    updateClock();
+  }
+
+  function stopDrag() {
+    dragging = null;
+    previousMinuteAngle = null;
+  }
+
+  minuteHand.addEventListener("pointerdown", e => {
+    startDrag("minute", e);
+    minuteHand.setPointerCapture(e.pointerId);
+  });
+
+  hourHand.addEventListener("pointerdown", e => {
+    startDrag("hour", e);
+    hourHand.setPointerCapture(e.pointerId);
+  });
+
+  document.addEventListener("pointermove", drag);
+  document.addEventListener("pointerup", stopDrag);
+
+  updateClock();
+</script>
+
+</body>
+</html>
