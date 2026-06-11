@@ -63,12 +63,24 @@
   }
 
   .minute {
-    width: 8px;
-    height: 135px;
-    background: #2563eb;
-    transform: translate(-50%, -100%) rotate(0deg);
-    z-index: 4;
-  }
+  width: 34px;              /* タッチ判定を大きくする */
+  height: 135px;
+  background: transparent;  /* 判定部分は透明にする */
+  transform: translate(-50%, -100%) rotate(0deg);
+  z-index: 4;
+}
+
+.minute::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 8px;               /* 見た目の長針の太さ */
+  height: 135px;
+  background: #2563eb;
+  border-radius: 999px;
+  transform: translateX(-50%);
+}
 
   .number {
     position: absolute;
