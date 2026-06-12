@@ -160,19 +160,15 @@
 </div>
   
   <div class="time" id="timeText">12:00</div>
-  <div class="hint">長針・短針を回せます</div>
 </div>
 
 <script>
   const clock = document.getElementById("clock");
-  const hourHand = document.getElementById("hourHand");
-  const minuteHand = document.getElementById("minuteHand");
-  const adjustButtons = document.querySelectorAll(".adjust");
-  const clock = document.getElementById("clock");
-  const hourHand = document.getElementById("hourHand");
-  const minuteHand = document.getElementById("minuteHand");
-  const timeText = document.getElementById("timeText");
-
+const hourHand = document.getElementById("hourHand");
+const minuteHand = document.getElementById("minuteHand");
+const adjustButtons = document.querySelectorAll(".adjust");
+const timeText = document.getElementById("timeText");
+  
   let hour = 12;
   let minute = 0;
   let dragging = null;
@@ -217,27 +213,6 @@
     timeText.textContent =
       `${displayHour}:${String(minute).padStart(2, "0")}`;
   }
-
-  function addMinutes(amount) {
-  let totalMinutes = (hour % 12) * 60 + minute;
-
-  totalMinutes += amount;
-
-  while (totalMinutes < 0) {
-    totalMinutes += 12 * 60;
-  }
-
-  totalMinutes = totalMinutes % (12 * 60);
-
-  hour = Math.floor(totalMinutes / 60);
-  minute = totalMinutes % 60;
-
-  if (hour === 0) {
-    hour = 12;
-  }
-
-  updateClock();
-}
 
   function addMinutes(amount) {
   let totalMinutes = (hour % 12) * 60 + minute;
