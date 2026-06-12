@@ -118,6 +118,27 @@
     color: #555;
     font-size: 14px;
   }
+
+  .adjust-buttons {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adjust {
+  font-size: 18px;
+  font-weight: bold;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #9a3412;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+  cursor: pointer;
+}
+  
 </style>
 </head>
 <body>
@@ -128,12 +149,25 @@
     <div class="hand minute" id="minuteHand"></div>
     <div class="center"></div>
   </div>
-
+  
+<div class="adjust-buttons">
+  <button class="adjust" data-minutes="-10">−10分</button>
+  <button class="adjust" data-minutes="-5">−5分</button>
+  <button class="adjust" data-minutes="-1">−1分</button>
+  <button class="adjust" data-minutes="1">＋1分</button>
+  <button class="adjust" data-minutes="5">＋5分</button>
+  <button class="adjust" data-minutes="10">＋10分</button>
+</div>
+  
   <div class="time" id="timeText">12:00</div>
   <div class="hint">長針・短針を回せます</div>
 </div>
 
 <script>
+  const clock = document.getElementById("clock");
+  const hourHand = document.getElementById("hourHand");
+  const minuteHand = document.getElementById("minuteHand");
+  const adjustButtons = document.querySelectorAll(".adjust");
   const clock = document.getElementById("clock");
   const hourHand = document.getElementById("hourHand");
   const minuteHand = document.getElementById("minuteHand");
@@ -183,6 +217,48 @@
     timeText.textContent =
       `${displayHour}:${String(minute).padStart(2, "0")}`;
   }
+
+  function addMinutes(amount) {
+  let totalMinutes = (hour % 12) * 60 + minute;
+
+  totalMinutes += amount;
+
+  while (totalMinutes < 0) {
+    totalMinutes += 12 * 60;
+  }
+
+  totalMinutes = totalMinutes % (12 * 60);
+
+  hour = Math.floor(totalMinutes / 60);
+  minute = totalMinutes % 60;
+
+  if (hour === 0) {
+    hour = 12;
+  }
+
+  updateClock();
+}
+
+  function addMinutes(amount) {
+  let totalMinutes = (hour % 12) * 60 + minute;
+
+  totalMinutes += amount;
+
+  while (totalMinutes < 0) {
+    totalMinutes += 12 * 60;
+  }
+
+  totalMinutes = totalMinutes % (12 * 60);
+
+  hour = Math.floor(totalMinutes / 60);
+  minute = totalMinutes % 60;
+
+  if (hour === 0) {
+    hour = 12;
+  }
+
+  updateClock();
+}
 
   function getAngleFromPointer(e) {
     const rect = clock.getBoundingClientRect();
@@ -274,9 +350,16 @@
   });
 
   document.addEventListener("pointermove", drag);
-  document.addEventListener("pointerup", stopDrag);
+document.addEventListener("pointerup", stopDrag);
 
-  updateClock();
+adjustButtons.forEach(button => {
+  button.addEventListener("click", () => {
+    const amount = Number(button.dataset.minutes);
+    addMinutes(amount);
+  });
+});
+
+updateClock();
 </script>
 
 </body>
